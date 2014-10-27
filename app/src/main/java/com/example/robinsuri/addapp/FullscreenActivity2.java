@@ -6,21 +6,19 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.example.robinsuri.addapp.util.Clock;
 import com.example.robinsuri.addapp.util.IClock;
 import com.example.robinsuri.addapp.util.SystemUiHider;
 
 import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 
 /**
@@ -38,7 +36,7 @@ public class FullscreenActivity2 extends Activity {
     private Summation summation;
     private Summation.Listener sListener;
     private IClock.Listener clockListener;
-    private IClock iclock;
+    private IClock iclock ;
     private TextView countdown;
     private Timer timer;
     public final static String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
@@ -64,6 +62,7 @@ public class FullscreenActivity2 extends Activity {
      * The instance of the {@link SystemUiHider} for this activity.
      */
     private SystemUiHider mSystemUiHider;
+    private TextView timeView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -145,53 +144,28 @@ public class FullscreenActivity2 extends Activity {
 
             }
         };
-
-        summation = new Summation();
-         countdown = (TextView) findViewById(R.id.sum);
-//        displaytime();
-
-
-    }
-
-    private void displaytime() {
-
-
-        iclock = new IClock() {
-            @Override
-            public long currentTimeInMillis() {
-                return System.currentTimeMillis();
-            }
-
-            @Override
-            public void addListener(Listener listener) {
-                _listeners.add(listener);
-
-            }
-
-            @Override
-            public void removeListener(Listener listener) {
-                _listeners.remove(listener);
-            }
-        };
-
-
+        iclock = new Clock();
+        timeView = (TextView) findViewById(R.id.sum);
         clockListener = new IClock.Listener() {
             @Override
             public void onTick() {
-                final TextView t1 = (TextView) findViewById(R.id.sum);
-                t1.setText(Long.toString(iclock.currentTimeInMillis()));
+                displayTime();
 
             }
 
         };
-        iclock.addListener(clockListener);
-        while (true) {
-            for(IClock.Listener listener : iclock._listeners)
-            {
-                listener.onTick();
-            }
-        }
+        summation = new Summation();
+        countdown = (TextView) findViewById(R.id.sum);
 
+    }
+
+    private void displayTime() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                timeView.setText(Long.toString(iclock.currentTimeInMillis()));
+            }
+        });
 
     }
 
@@ -330,12 +304,14 @@ public class FullscreenActivity2 extends Activity {
     protected void onResume() {
         super.onResume();
         Log.d("FullScreenActivity", "activity resumed");
+//        long l = iclock.currentTimeInMillis();
 
 //        summation.addSumListener(sListener);
 //
-//        iclock.addListener(clockListener);
 
-
+        iclock.addListener(clockListener);
+//        iclock.runEverySecond();
+        displayTime();
     }
 
     @Override
@@ -343,47 +319,47 @@ public class FullscreenActivity2 extends Activity {
         super.onPause();
         Log.d("FullScreenActivity", "activity paused");
 //        summation.removeSumListener(null);
-//        iclock.removeListener(clockListener);
+        iclock.removeListener(clockListener);
     }
 
     protected void onStart() {
         super.onStart();
-        timer = new Timer("DigitalClock");
-        Calendar calendar = Calendar.getInstance();
-
-        // Get the Current Time
-        final Runnable updateTask = new Runnable() {
-            public void run() {
-                countdown.setText(getCurrentTimeString()); // shows the current time of the day
-//                countdown.setText(getReminingTime()); // shows the remaining time of the day
-            }
-        };
-
-        // update the UI
-        int msec = 999 - calendar.get(Calendar.MILLISECOND);
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(updateTask);
-            }
-        }, msec, 1000);
+//        timer = new Timer("DigitalClock");
+//        Calendar calendar = Calendar.getInstance();
+//
+//        // Get the Current Time
+//        final Runnable updateTask = new Runnable() {
+//            public void run() {
+//                countdown.setText(getCurrentTimeString()); // shows the current time of the day
+////                countdown.setText(getReminingTime()); // shows the remaining time of the day
+//            }
+//        };
+//
+//        // update the UI
+//        int msec = 999 - calendar.get(Calendar.MILLISECOND);
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                runOnUiThread(updateTask);
+//            }
+//        }, msec, 1000);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        timer.cancel();
-        timer.purge();
-        timer = null;
+//        timer.cancel();
+//        timer.purge();
+//        timer = null;
     }
+
     private String getReminingTime() {
         Calendar calendar = Calendar.getInstance();
         int hour = 23 - calendar.get(Calendar.HOUR_OF_DAY);
         int minute = 59 - calendar.get(Calendar.MINUTE);
         int second = 59 - calendar.get(Calendar.SECOND);
-        return hour+":"+minute+":"+second;
+        return hour + ":" + minute + ":" + second;
     }
-
 
 
     private String getCurrentTimeString() {
@@ -391,7 +367,7 @@ public class FullscreenActivity2 extends Activity {
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
         int second = calendar.get(Calendar.SECOND);
-        return hour+":"+minute+":"+second;
+        return hour + ":" + minute + ":" + second;
     }
 }
 
